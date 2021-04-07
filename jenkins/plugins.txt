@@ -1,5 +1,6 @@
 credentials:2.3.15
 maven-plugin:3.10
+pipeline-maven:3.10.0
 junit:1.49
 configuration-as-code:1.47
 docker-plugin:1.2.2
