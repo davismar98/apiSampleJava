@@ -3,3 +3,7 @@ maven-plugin:3.10
 junit:1.49
 configuration-as-code:1.47
 docker-plugin:1.2.2
+cloudbees-folder:6.15
+git:4.7.1
+kubernetes:1.29.2
+prometheus:2.0.9
