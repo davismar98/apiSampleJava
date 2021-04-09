@@ -7,15 +7,23 @@ pipeline {
 
     agent any
     stages { 
-        stage('build') {
+        stage('Maven compile') {
             steps {
                 withMaven(maven:'maven363') {
-                    sh "mvn clean verify"
+                    sh "mvn clean verify -DskipTests"
                 }
             } 
         }
-        
-        stage('Build image') {         
+
+        stage('Maven Test') {
+            steps {
+                withMaven(maven:'maven363') {
+                    sh "mvn test"
+                }
+            }
+        }
+
+        stage('Build Docker image') {         
             steps {
                 script {
                     dockerImage = docker.build registry + ":$BUILD_NUMBER"
@@ -23,7 +31,7 @@ pipeline {
             }
         } 
         
-        stage('Test image') {   
+        stage('Test Docker image') {   
             steps {    
                 script {
                     dockerImage.inside {            
@@ -32,7 +40,7 @@ pipeline {
                 }   
             }  
         }
-        stage('Deploy Image') {
+        stage('Deliver Docker image') {
             steps{
                 script {
                     docker.withRegistry('', registryCredential ) {
