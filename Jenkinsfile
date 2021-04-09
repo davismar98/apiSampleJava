@@ -41,7 +41,11 @@ pipeline {
                 }   
             }  
         }
+
         stage('Deliver Docker image') {
+            when {
+                expression { BRANCH_NAME ==~ /develop|release|master/ }
+            }
             steps{
                 script {
                     docker.withRegistry('', registryCredential ) {
@@ -49,6 +53,37 @@ pipeline {
                     }
                 }
             }
-        }     
+        }
+        
+        stage ('Deploy to environment') {
+            parallel {
+                stage('DEVELOP') {
+                    when {
+                        branch 'develop' 
+                    }
+                    steps {
+                        sh 'echo "[placeholder] Deploying to Development env..."'
+                    }
+                }
+
+                stage('STAGE') {
+                    when {
+                        branch 'release' 
+                    }
+                    steps {
+                        sh 'echo "[placeholder] Deploying to Stage env..."'
+                    }
+                }  
+
+                stage('PROD') {
+                    when {
+                        branch 'master' 
+                    }
+                    steps {
+                        sh 'echo "[placeholder] Deploying to Production env..."'
+                    }
+                }  
+            }
+        }
     }
 }
