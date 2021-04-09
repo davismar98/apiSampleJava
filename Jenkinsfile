@@ -3,6 +3,7 @@ pipeline {
         registry = "davismar98/api-sre-challenge"
         registryCredential = 'dockerhub-cred'
         dockerImage = ''
+        dockerTag = GIT_COMMIT.substring(0,7)
     }
 
     agent any
@@ -26,7 +27,7 @@ pipeline {
         stage('Build Docker image') {         
             steps {
                 script {
-                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                    dockerImage = docker.build registry + ":$dockerTag"
                 }
             }
         } 
