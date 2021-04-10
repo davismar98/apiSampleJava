@@ -19,6 +19,6 @@ spec:
     spec:
       containers:
       - name: api-sre-challenge
-        image: davismar98/api-sre-challenge:a9baa12
+        image: davismar98/api-sre-challenge:2ed758b
         ports:
         - containerPort: 8080
