@@ -1,6 +1,7 @@
 pipeline {
     environment {\
         projectName = "api-sre-challenge"
+        applicationName = "SRE Challenge API"
         registry = "davismar98/api-sre-challenge"
         registryCredential = 'dockerhub-cred'
         dockerImage = ''
@@ -8,36 +9,45 @@ pipeline {
     }
 
     agent any
+
+    triggers {
+        pollSCM "* * * * *"
+    }
+
     stages { 
-        stage('Maven compile') {
+        stage('Compile Application') {
             steps {
                 withMaven(maven:'maven363') {
+                    echo "*** Compiling ${applicationName} Application ***"
                     sh "mvn clean verify -DskipTests"
                 }
             } 
         }
 
-        stage('Maven Test') {
+        stage('Test Application') {
             steps {
                 withMaven(maven:'maven363') {
+                    echo "*** Testing ${applicationName} Application ***"
                     sh "mvn test"
                 }
             }
         }
 
-        stage('Build Docker image') {         
+        stage('Build Docker Image') {         
             steps {
                 script {
+                    echo "*** Building ${applicationName} Docker Image ***"
                     dockerImage = docker.build registry + ":$dockerTag"
                 }
             }
         } 
         
-        stage('Test Docker image') {   
+        stage('Test Docker Image') {   
             steps {    
                 script {
-                    dockerImage.inside {            
-                    sh 'echo "Tests passed"'        
+                    dockerImage.inside {  
+                        echo "*** Testing ${applicationName} Docker Image ***"         
+                        echo "[placeholder] Tests passed!"       
                     }   
                 }   
             }  
@@ -50,9 +60,17 @@ pipeline {
             steps{
                 script {
                     docker.withRegistry('', registryCredential ) {
+                        echo "*** Pushing ${applicationName} Docker Image ***" 
                         dockerImage.push()
                     }
                 }
+            }
+        }
+
+        stage('Remove local Docker images') {
+            steps {
+                echo "*** Deleting ${applicationName} Local Docker Images ***" 
+                sh ("docker rmi -f $registry:$dockerTag || :")
             }
         }
         
@@ -74,6 +92,7 @@ pipeline {
                     }
                     steps {
                         sh 'echo "[placeholder] Deploying to Stage env..."'
+                        deployApp('stage')
                     }
                 }  
 
@@ -83,6 +102,7 @@ pipeline {
                     }
                     steps {
                         sh 'echo "[placeholder] Deploying to Production env..."'
+                        deployApp('production')
                     }
                 }  
             }
