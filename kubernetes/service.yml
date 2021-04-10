@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-sre-challenge
+  labels:
+    app: api-sre-challenge
+spec:
+  type: NodePort
+  selector:
+    app: api-sre-challenge
+    version: v1
+  ports:
+    - protocol: TCP
+      port: 8080
+      nodePort: 30000

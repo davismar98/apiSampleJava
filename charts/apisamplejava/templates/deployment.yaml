@@ -1,6 +1,6 @@
 {{- if .Values.knativeDeploy }}
 {{- else }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
@@ -9,6 +9,10 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 spec:
   replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      draft: {{ default "draft-app" .Values.draft }}
+      app: {{ template "fullname" . }}
   template:
     metadata:
       labels:
@@ -30,22 +34,4 @@ spec:
 {{- end }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
-        livenessProbe:
-          httpGet:
-            path: {{ .Values.probePath }}
-            port: {{ .Values.service.internalPort }}
-          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-          successThreshold: {{ .Values.livenessProbe.successThreshold }}
-          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-        readinessProbe:
-          httpGet:
-            path: {{ .Values.probePath }}
-            port: {{ .Values.service.internalPort }}
-          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-          successThreshold: {{ .Values.readinessProbe.successThreshold }}
-          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
 {{- end }}
