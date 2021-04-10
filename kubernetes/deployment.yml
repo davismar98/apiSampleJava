@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deleteme
+  name: %SRE_PROJECT_NAME%
   labels:
     version: v1
-    app: deleteme
+    app: %SRE_PROJECT_NAME%
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: deleteme
+      app: %SRE_PROJECT_NAME%
       version: v1
   template:
     metadata:
       labels:
         version: v1
-        app: deleteme
+        app: %SRE_PROJECT_NAME%
       annotations:
         kubernetes.io/change-cause: "Image updated to %IMAGE_VERSION%"
     spec:
       containers:
-      - name: deleteme
-        image: "davismar98/deleteme:%IMAGE_VERSION%"
+      - name: %SRE_PROJECT_NAME%
+        image: "davismar98/%SRE_PROJECT_NAME%:%IMAGE_VERSION%"
         ports:
         - containerPort: 8080

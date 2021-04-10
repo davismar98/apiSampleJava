@@ -111,7 +111,8 @@ pipeline {
 }
 
 def deployApp(env) {
-    sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/deployment.yml"
-    sh "sed -i 's/%%IMAGE_VERSION%%/${dockerTag}/g' kubernetes/deployment.yml"
+    sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/deployment.yml kubernetes/service.yml"
+    sh "sed -i 's/%IMAGE_VERSION%/${dockerTag}/g' kubernetes/deployment.yml kubernetes/service.yml"
     sh "cat kubernetes/deployment.yml"
+    sh "cat kubernetes/service.yml"
 }
