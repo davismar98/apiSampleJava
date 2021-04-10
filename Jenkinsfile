@@ -91,7 +91,6 @@ pipeline {
 }
 
 def deployApp(env) {
-    sh "sed -i 's/%DOCKER_REGISTRY%/${registry}/g' kubernetes/deployment.yaml"
     sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/deployment.yaml"
     sh "sed -i 's/%%IMAGE_VERSION%%/${dockerTag}/g' kubernetes/deployment.yaml"
     sh "cat kubernetes/deployment.yml"
