@@ -1,5 +1,6 @@
 pipeline {
-    environment {
+    environment {\
+        projectName = "api-sre-challenge"
         registry = "davismar98/api-sre-challenge"
         registryCredential = 'dockerhub-cred'
         dockerImage = ''
@@ -63,6 +64,7 @@ pipeline {
                     }
                     steps {
                         sh 'echo "[placeholder] Deploying to Development env..."'
+                        deployApp('develop')
                     }
                 }
 
@@ -86,4 +88,12 @@ pipeline {
             }
         }
     }
+}
+
+def deployApp(env) {
+    def deployment = readFile file: "kubernetes/deployment.yml"
+    deployment = deployment.replaceAll("%SRE_PROJECT_NAME%", "${projectName}").replaceAll("%IMAGE_VERSION%", "${dockerTag}")
+    writeFile file: "kubernetes/deployment.yml", text: text
+
+    sh "cat kubernetes/deployment.yml"
 }
