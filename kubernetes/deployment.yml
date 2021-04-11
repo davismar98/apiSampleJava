@@ -3,18 +3,15 @@ kind: Deployment
 metadata:
   name: %SRE_PROJECT_NAME%
   labels:
-    version: v1
     app: %SRE_PROJECT_NAME%
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: %SRE_PROJECT_NAME%
-      version: v1
   template:
     metadata:
       labels:
-        version: v1
         app: %SRE_PROJECT_NAME%
       annotations:
         kubernetes.io/change-cause: "Image updated to %IMAGE_VERSION%"

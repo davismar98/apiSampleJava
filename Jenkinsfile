@@ -6,6 +6,8 @@ pipeline {
         registryCredential = 'dockerhub-cred'
         dockerImage = ''
         dockerTag = GIT_COMMIT.substring(0,7)
+        eks_cluster_name = 'sre-challenge'
+        eks_cluster_region = 'us-east-1'
     }
 
     agent any
@@ -81,7 +83,7 @@ pipeline {
                         branch 'develop' 
                     }
                     steps {
-                        sh 'echo "[placeholder] Deploying to Development env..."'
+                        echo "*** Deploying ${applicationName} to DEVELOP environment ***" 
                         deployApp('develop')
                     }
                 }
@@ -91,7 +93,7 @@ pipeline {
                         branch 'release' 
                     }
                     steps {
-                        sh 'echo "[placeholder] Deploying to Stage env..."'
+                        echo "*** Deploying ${applicationName} to STAGE environment ***" 
                         deployApp('stage')
                     }
                 }  
@@ -101,7 +103,7 @@ pipeline {
                         branch 'master' 
                     }
                     steps {
-                        sh 'echo "[placeholder] Deploying to Production env..."'
+                        echo "*** Deploying ${applicationName} to PRODUCTION environment ***" 
                         deployApp('production')
                     }
                 }  
@@ -111,8 +113,15 @@ pipeline {
 }
 
 def deployApp(env) {
+    echo '*** Rendering manifest for deployment ***'
     sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/deployment.yml kubernetes/service.yml"
     sh "sed -i 's/%IMAGE_VERSION%/${dockerTag}/g' kubernetes/deployment.yml kubernetes/service.yml"
-    sh "cat kubernetes/deployment.yml"
-    sh "cat kubernetes/service.yml"
+    
+    withAWS(credentials:'aws-cred') {
+        echo "*** Authenticating with the AWS EKS Cluster ***"
+        sh "aws eks --region ${eks_cluster_region} update-kubeconfig --name ${eks_cluster_name}"
+        
+        echo "*** Updating Resources in namespace '${env}' ***"
+        sh "kubectl apply -f kubernetes/ -n ${env}"
+    }
 }
