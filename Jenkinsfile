@@ -1,5 +1,5 @@
 pipeline {
-    environment {\
+    environment {
         projectName = "api-sre-challenge"
         applicationName = "SRE Challenge API"
         registry = "davismar98/api-sre-challenge"
