@@ -1,42 +1,55 @@
 pipeline {
     environment {
+        projectName = "api-sre-challenge"
+        applicationName = "SRE Challenge API"
         registry = "davismar98/api-sre-challenge"
         registryCredential = 'dockerhub-cred'
         dockerImage = ''
         dockerTag = GIT_COMMIT.substring(0,7)
+        eks_cluster_name = 'sre-challenge'
+        eks_cluster_region = 'us-east-1'
     }
 
     agent any
+
+    triggers {
+        pollSCM "* * * * *"
+    }
+
     stages { 
-        stage('Maven compile') {
+        stage('Compile Application') {
             steps {
                 withMaven(maven:'maven363') {
+                    echo "*** Compiling ${applicationName} Application ***"
                     sh "mvn clean verify -DskipTests"
                 }
             } 
         }
 
-        stage('Maven Test') {
+        stage('Test Application') {
             steps {
                 withMaven(maven:'maven363') {
+                    echo "*** Testing ${applicationName} Application ***"
                     sh "mvn test"
                 }
             }
         }
 
-        stage('Build Docker image') {         
+        stage('Build Docker Image') {         
             steps {
                 script {
+                    echo "*** Building ${applicationName} Docker Image ***"
                     dockerImage = docker.build registry + ":$dockerTag"
                 }
             }
         } 
         
-        stage('Test Docker image') {   
+        stage('Test Docker Image') {   
             steps {    
                 script {
-                    dockerImage.inside {            
-                    sh 'echo "Tests passed"'        
+                    dockerImage.inside {  
+                        echo "*** Testing ${applicationName} Docker Image ***"         
+                        echo "[placeholder] Tests passed!"       
                     }   
                 }   
             }  
@@ -49,9 +62,17 @@ pipeline {
             steps{
                 script {
                     docker.withRegistry('', registryCredential ) {
+                        echo "*** Pushing ${applicationName} Docker Image ***" 
                         dockerImage.push()
                     }
                 }
+            }
+        }
+
+        stage('Remove local Docker images') {
+            steps {
+                echo "*** Deleting ${applicationName} Local Docker Images ***" 
+                sh ("docker rmi -f $registry:$dockerTag || :")
             }
         }
         
@@ -62,7 +83,8 @@ pipeline {
                         branch 'develop' 
                     }
                     steps {
-                        sh 'echo "[placeholder] Deploying to Development env..."'
+                        echo "*** Deploying ${applicationName} to DEVELOP environment ***" 
+                        deployApp('develop')
                     }
                 }
 
@@ -71,7 +93,8 @@ pipeline {
                         branch 'release' 
                     }
                     steps {
-                        sh 'echo "[placeholder] Deploying to Stage env..."'
+                        echo "*** Deploying ${applicationName} to STAGE environment ***" 
+                        deployApp('stage')
                     }
                 }  
 
@@ -80,10 +103,25 @@ pipeline {
                         branch 'master' 
                     }
                     steps {
-                        sh 'echo "[placeholder] Deploying to Production env..."'
+                        echo "*** Deploying ${applicationName} to PRODUCTION environment ***" 
+                        deployApp('production')
                     }
                 }  
             }
         }
+    }
+}
+
+def deployApp(env) {
+    echo '*** Rendering manifest for deployment ***'
+    sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/deployment.yml kubernetes/service.yml"
+    sh "sed -i 's/%IMAGE_VERSION%/${dockerTag}/g' kubernetes/deployment.yml kubernetes/service.yml"
+    
+    withAWS(credentials:'aws-cred') {
+        echo "*** Authenticating with the AWS EKS Cluster ***"
+        sh "aws eks --region ${eks_cluster_region} update-kubeconfig --name ${eks_cluster_name}"
+        
+        echo "*** Updating Resources in namespace '${env}' ***"
+        sh "kubectl apply -f kubernetes/ -n ${env}"
     }
 }

@@ -1,0 +1,12 @@
+# ---
+# apiVersion: monitoring.coreos.com/v1
+# kind: ServiceMonitor
+# metadata:
+#   name: api-sre-challenge-service-monitor
+# spec:
+#   selector:
+#     matchLabels:
+#       app: api-sre-challenge
+#   endpoints: 
+#     - port: http-traffic
+#       path: "/actuator/prometheus"

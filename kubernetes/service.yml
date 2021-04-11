@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: %SRE_PROJECT_NAME%
+  labels:
+    app: %SRE_PROJECT_NAME%
+spec:
+  type: LoadBalancer
+  selector:
+    app: %SRE_PROJECT_NAME%
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
