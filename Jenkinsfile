@@ -38,13 +38,13 @@ pipeline {
 
         stage('Code Quality Analysis') {
             steps {
-                echo "[placeholder] Code quality anaylsis with tool (i.e SonarQube)"
+                echo "[placeholder] Code quality analysis integration (i.e SonarQube)"
             }
         }
         
         stage('Application Security Test (SAST, SCA)') {
             steps {
-                echo "[placeholder] Software security test or Software Composition Analysis (i.e Veracode, Checkmarkx, BlackDuck)"
+                echo "[placeholder] Software security test or Software Composition Analysis integration (i.e Veracode, Checkmarkx, Black Duck)"
             }
         }
 
@@ -138,7 +138,7 @@ pipeline {
             script {
                 if ( BRANCH_NAME ==~ /develop|release|master/ ) {
                     echo "*** Notifiying success result to Slack ***" 
-                    slackSend color: "good", message: "Application ${applicationName} (version ${dockerTag}) has been successfully deployed to ${env}! Check ${env.BUILD_URL} for details."
+                    slackSend color: "good", message: "Application ${applicationName} (version ${dockerTag}) has been successfully deployed to ${env}! Check ${BUILD_URL} for details."
                 }
                     
             }
@@ -148,7 +148,7 @@ pipeline {
             script {
                 if ( BRANCH_NAME ==~ /develop|release|master/ ) {
                     echo "*** Notifiying failed result to Slack ***" 
-                    slackSend color: "danger", message: "Application ${applicationName} (version ${dockerTag}) could not be deployed to ${env}! Check ${env.BUILD_URL} for details."
+                    slackSend color: "danger", message: "Application ${applicationName} (version ${dockerTag}) could not be deployed to ${env}! Check ${BUILD_URL} for details."
                 }
             }
         }
