@@ -15,6 +15,9 @@ spec:
         app: %SRE_PROJECT_NAME%
       annotations:
         kubernetes.io/change-cause: "Image updated to %IMAGE_VERSION%"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: /actuator/prometheus
     spec:
       containers:
       - name: %SRE_PROJECT_NAME%
