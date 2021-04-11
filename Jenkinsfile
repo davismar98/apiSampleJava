@@ -114,8 +114,8 @@ pipeline {
 
 def deployApp(env) {
     echo '*** Rendering manifest for deployment ***'
-    sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/deployment.yml kubernetes/service.yml"
-    sh "sed -i 's/%IMAGE_VERSION%/${dockerTag}/g' kubernetes/deployment.yml kubernetes/service.yml"
+    sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/*.yml"
+    sh "sed -i 's/%IMAGE_VERSION%/${dockerTag}/g' kubernetes/*.yml"
     
     withAWS(credentials:'aws-cred') {
         echo "*** Authenticating with the AWS EKS Cluster ***"

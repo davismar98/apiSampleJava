@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,3 +25,25 @@ spec:
         image: "davismar98/%SRE_PROJECT_NAME%:%IMAGE_VERSION%"
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "250Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
