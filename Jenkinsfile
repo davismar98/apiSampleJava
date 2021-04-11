@@ -2,10 +2,11 @@ pipeline {
     environment {
         projectName = "api-sre-challenge"
         applicationName = "SRE Challenge API"
-        registry = "davismar98/api-sre-challenge"
-        registryCredential = 'dockerhub-cred'
-        dockerImage = ''
+        dockerRegistry = "davismar98/api-sre-challenge"
+        dockerRegistryCredential = "dockerhub-cred"
+        dockerImage = ""
         dockerTag = GIT_COMMIT.substring(0,7)
+        env = ""
         eks_cluster_name = 'sre-challenge'
         eks_cluster_region = 'us-east-1'
     }
@@ -26,7 +27,7 @@ pipeline {
             } 
         }
 
-        stage('Test Application') {
+        stage('Unit Test Application') {
             steps {
                 withMaven(maven:'maven363') {
                     echo "*** Testing ${applicationName} Application ***"
@@ -35,11 +36,23 @@ pipeline {
             }
         }
 
+        stage('Code Quality Analysis') {
+            steps {
+                echo "[placeholder] Code quality anaylsis with tool (i.e SonarQube)"
+            }
+        }
+        
+        stage('Application Security Test (SAST, SCA)') {
+            steps {
+                echo "[placeholder] Software security test or Software Composition Analysis (i.e Veracode, Checkmarkx, BlackDuck)"
+            }
+        }
+
         stage('Build Docker Image') {         
             steps {
                 script {
                     echo "*** Building ${applicationName} Docker Image ***"
-                    dockerImage = docker.build registry + ":$dockerTag"
+                    dockerImage = docker.build dockerRegistry + ":$dockerTag"
                 }
             }
         } 
@@ -61,7 +74,7 @@ pipeline {
             }
             steps{
                 script {
-                    docker.withRegistry('', registryCredential ) {
+                    docker.withRegistry('', dockerRegistryCredential ) {
                         echo "*** Pushing ${applicationName} Docker Image ***" 
                         dockerImage.push()
                     }
@@ -72,7 +85,7 @@ pipeline {
         stage('Remove local Docker images') {
             steps {
                 echo "*** Deleting ${applicationName} Local Docker Images ***" 
-                sh ("docker rmi -f $registry:$dockerTag || :")
+                sh ("docker rmi -f $dockerRegistry:$dockerTag || :")
             }
         }
         
@@ -83,8 +96,11 @@ pipeline {
                         branch 'develop' 
                     }
                     steps {
-                        echo "*** Deploying ${applicationName} to DEVELOP environment ***" 
-                        deployApp('develop')
+                        script {
+                            echo "*** Deploying ${applicationName} to DEVELOP environment ***" 
+                            env = "develop"
+                            deployApp("develop")
+                        }
                     }
                 }
 
@@ -93,8 +109,11 @@ pipeline {
                         branch 'release' 
                     }
                     steps {
-                        echo "*** Deploying ${applicationName} to STAGE environment ***" 
-                        deployApp('stage')
+                        script {
+                            echo "*** Deploying ${applicationName} to STAGE environment ***" 
+                            env = "stage"
+                            deployApp(env)
+                        }
                     }
                 }  
 
@@ -103,16 +122,40 @@ pipeline {
                         branch 'master' 
                     }
                     steps {
-                        echo "*** Deploying ${applicationName} to PRODUCTION environment ***" 
-                        deployApp('production')
+                        script { 
+                            echo "*** Deploying ${applicationName} to PRODUCTION environment ***" 
+                            env = "production"
+                            deployApp(env)
+                        }
                     }
                 }  
             }
         }
     }
+
+    post { 
+        success { 
+            script {
+                if ( BRANCH_NAME ==~ /develop|release|master/ ) {
+                    echo "*** Notifiying success result to Slack ***" 
+                    slackSend color: "good", message: "Application ${applicationName} (version ${dockerTag}) has been successfully deployed to ${env}! Check ${env.BUILD_URL} for details."
+                }
+                    
+            }
+        }
+
+        failure {
+            script {
+                if ( BRANCH_NAME ==~ /develop|release|master/ ) {
+                    echo "*** Notifiying failed result to Slack ***" 
+                    slackSend color: "danger", message: "Application ${applicationName} (version ${dockerTag}) could not be deployed to ${env}! Check ${env.BUILD_URL} for details."
+                }
+            }
+        }
+    }
 }
 
-def deployApp(env) {
+def deployApp(eks_namespace) {
     echo '*** Rendering manifest for deployment ***'
     sh "sed -i 's/%SRE_PROJECT_NAME%/${projectName}/g' kubernetes/*.yml"
     sh "sed -i 's/%IMAGE_VERSION%/${dockerTag}/g' kubernetes/*.yml"
@@ -121,7 +164,7 @@ def deployApp(env) {
         echo "*** Authenticating with the AWS EKS Cluster ***"
         sh "aws eks --region ${eks_cluster_region} update-kubeconfig --name ${eks_cluster_name}"
         
-        echo "*** Updating Resources in namespace '${env}' ***"
-        sh "kubectl apply -f kubernetes/ -n ${env}"
+        echo "*** Updating Resources in namespace '${eks_namespace}' ***"
+        sh "kubectl apply -f kubernetes/ -n ${eks_namespace}"
     }
 }
