@@ -131,6 +131,12 @@ pipeline {
                 }  
             }
         }
+
+        stage('Notify') {
+            steps {
+                echo "Pipeline end!"
+            }
+        }
     }
 
     post { 
